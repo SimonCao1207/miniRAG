@@ -10,6 +10,14 @@ ollama pull hf.co/CompendiumLabs/bge-base-en-v1.5-gguf
 ollama pull hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF
 ```
 
+## Install and Run
+
+- Use [uv](https://docs.astral.sh/uv/pip/environments/) to create virtual env
+
+```
+uv pip install -e .
+```
+
 ## Plan
 
 Here're the plan for now: 
