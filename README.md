@@ -2,6 +2,16 @@
 
 An implementation of a simple RAG system, similar to Langchain. miniRAG tries to be small, clean, interpretable and educational.
 
+
+## Download ollama and models
+Open a terminal and run the following command to download the required models
+```
+ollama pull hf.co/CompendiumLabs/bge-base-en-v1.5-gguf
+ollama pull hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF
+```
+
+## Plan
+
 Here're the plan for now: 
 
 - Run our rag system on some benchmarks : 
@@ -9,7 +19,7 @@ Here're the plan for now:
     + [flash rag](https://huggingface.co/datasets/RUC-NLPIR/FlashRAG_datasets)
     + [crag](https://github.com/facebookresearch/CRAG)
 
-- Optimize the rag system with different methods : contextual retrieval, ...
+- Optimize the rag system with different methods : [contextual retrieval](https://www.anthropic.com/news/contextual-retrieval), ...
 - Make a web-ui for demo 
 
 
