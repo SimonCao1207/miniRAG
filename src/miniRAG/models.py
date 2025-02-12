@@ -83,7 +83,7 @@ def get_clean_message_list(
     return output_message_list
 
 
-class Model:
+class ChatModel:
     def __init__(self, **kwargs):
         self.last_input_token_count = None
         self.last_output_token_count = None
@@ -161,7 +161,7 @@ class Model:
         pass  # To be implemented in child classes!
 
 
-class OllamaModel(Model):
+class OllamaModel(ChatModel):
     """This model connects to an OpenAI-compatible API server.
 
     Parameters:
@@ -196,7 +196,7 @@ class OllamaModel(Model):
         return message
 
 
-class OpenAIServerModel(Model):
+class OpenAIServerModel(ChatModel):
     """This model connects to an OpenAI-compatible API server.
 
     Parameters:
@@ -267,7 +267,7 @@ class OpenAIServerModel(Model):
 __all__ = [
     "MessageRole",
     "get_clean_message_list",
-    "Model",
+    "ChatModel",
     "OpenAIServerModel",
     "OllamaModel",
     "ChatMessage",

@@ -1,6 +1,6 @@
 # miniRAG
 
-An implementation of a simple RAG system. miniRAG tries to be small, clean, interpretable and educational.
+An implementation of a simple RAG system, similar to Langchain. miniRAG tries to be small, clean, interpretable and educational.
 
 Here're the plan for now: 
 
