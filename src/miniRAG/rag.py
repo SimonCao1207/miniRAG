@@ -105,7 +105,7 @@ if __name__ == "__main__":
             api_key=os.getenv("OPENAI_API_KEY"),
             api_base="https://api.openai.com/v1",
         )
-    else:
+    elif config.LANGUAGE_MODEL == "llama":
         model = OllamaModel(model_id)
     rag = RAG(model, retriever)
 
