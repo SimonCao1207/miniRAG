@@ -1,8 +1,5 @@
 # https://huggingface.co/blog/ngxson/make-your-own-rag
-from pathlib import Path
 
-import datasets
-from datasets import Dataset
 from miniRAG.models import ChatModel
 from miniRAG.retriever import Retriever
 from miniRAG.utils.log import Logger
@@ -37,25 +34,3 @@ class RAG:
         logger.log_rule("Chatbot response:")
 
         return response.content  # type ignore
-
-
-def load_corpus(corpus_path: Path) -> Dataset:
-    """
-    Return Dataset object with features "id" and "contents"
-    """
-    logger.log("Loading the corpus...")
-    if corpus_path.suffix == ".jsonl":
-        corpus = datasets.load_dataset(  # type: ignore
-            "json", data_files=str(corpus_path), split="train"
-        )
-        return corpus
-    else:
-        with open(corpus_path, "r") as file:
-            data = [line.strip() for line in file.readlines()]
-        dataset = Dataset.from_dict(
-            {
-                "id": list(range(len(data))),
-                "contents": data,
-            }
-        )
-        return dataset

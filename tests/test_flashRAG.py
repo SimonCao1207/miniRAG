@@ -13,8 +13,8 @@ workspace = Path(__file__).resolve().parent.parent
 config_dict = {
     "model": "llama",
     "embedding_model": "hf.co/CompendiumLabs/bge-base-en-v1.5-gguf",
-    "corpus_path": workspace / "datasets/cat-facts.txt",
-    "index_path": workspace / "tests/vector_db.json",
+    "corpus_path": workspace / "datasets/flashRAG/general_knowledge.jsonl",
+    "index_path": workspace / "tests/vector_db_flashRAG.json",
 }
 
 
@@ -40,8 +40,8 @@ def setup_rag():
     return rag
 
 
-def test_cat_facts(setup_rag):
+def test_flashRAG(setup_rag):
     rag = setup_rag
-    input_query = "What is the cat top speed? Answer short without explanation."
+    input_query = "What is the capital of France? Answer short without explanation."
     response = rag.generate(input_query)
-    assert "31 mph" in response
+    assert "Paris" in response

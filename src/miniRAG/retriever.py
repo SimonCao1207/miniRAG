@@ -9,6 +9,29 @@ from miniRAG.utils.log import Logger
 logger = Logger()
 
 
+def load_corpus(corpus_path: Path) -> Dataset:
+    """
+    Return Dataset object with features "id" and "contents"
+    Each id is like a Document object in langchain
+    """
+    logger.log("Loading the corpus...")
+    if corpus_path.suffix == ".jsonl":
+        corpus: Dataset = datasets.load_dataset(  # type: ignore
+            "json", data_files=str(corpus_path), split="train"
+        )
+        return corpus
+    else:
+        with open(corpus_path, "r") as file:
+            data = [line.strip() for line in file.readlines()]
+        dataset = Dataset.from_dict(
+            {
+                "id": list(range(len(data))),
+                "contents": data,
+            }
+        )
+        return dataset
+
+
 class VectorDB:
     def __init__(self, db_path, embedding):
         self.db_path = Path(db_path)
@@ -20,9 +43,12 @@ class VectorDB:
 
     def initialize(self, corpus: Dataset):
         """
-        Each element in the VECTOR_DB will be a tuple (chunk, embedding)
+        This is where the indexing(splitting) happens.
+        Here we will use a simple text splitter that partitions based on sentences.
+
+        Currently, each element in the VECTOR_DB will be a tuple (chunk, embedding)
         The embedding is a list of floats, for example: [0.1, 0.04, -0.34, 0.21, ...]
-        TODO: Use a more efficient vector database
+        TODO: Use a more efficient vector database, with better indexing approach.
         """
         self.vector_db = [
             (row["contents"], self.embed_text(row["contents"])) for row in corpus
