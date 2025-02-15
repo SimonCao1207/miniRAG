@@ -3,7 +3,8 @@ from pathlib import Path
 
 import ollama
 
-from utils.log import Logger
+from datasets import Dataset
+from miniRAG.utils.log import Logger
 
 logger = Logger()
 
@@ -17,13 +18,15 @@ class VectorDB:
     def embed_text(self, text):
         return ollama.embed(model=self.embedding, input=text)["embeddings"][0]
 
-    def initialize(self, dataset):
+    def initialize(self, corpus: Dataset):
         """
         Each element in the VECTOR_DB will be a tuple (chunk, embedding)
         The embedding is a list of floats, for example: [0.1, 0.04, -0.34, 0.21, ...]
         TODO: Use a more efficient vector database
         """
-        self.vector_db = [(chunk, self.embed_text(chunk)) for chunk in dataset]
+        self.vector_db = [
+            (row["contents"], self.embed_text(row["contents"])) for row in corpus
+        ]
         with open(self.db_path, "w") as f:
             json.dump(self.vector_db, f)
         logger.log(f"Vector database built with {len(self.vector_db)} entries")
