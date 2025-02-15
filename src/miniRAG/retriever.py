@@ -22,11 +22,11 @@ def load_corpus(corpus_path: Path) -> Dataset:
         return corpus
     else:
         with open(corpus_path, "r") as file:
-            data = [line.strip() for line in file.readlines()]
+            data = file.read()
         dataset = Dataset.from_dict(
             {
-                "id": list(range(len(data))),
-                "contents": data,
+                "id": [0],
+                "contents": [data],
             }
         )
         return dataset
@@ -44,15 +44,18 @@ class VectorDB:
     def initialize(self, corpus: Dataset):
         """
         This is where the indexing(splitting) happens.
-        Here we will use a simple text splitter that partitions based on sentences.
-
         Currently, each element in the VECTOR_DB will be a tuple (chunk, embedding)
-        The embedding is a list of floats, for example: [0.1, 0.04, -0.34, 0.21, ...]
         TODO: Use a more efficient vector database, with better indexing approach.
         """
+
+        # Here we will use a simple text splitter that partitions based on sentences
+        # seperated by new line.
         self.vector_db = [
-            (row["contents"], self.embed_text(row["contents"])) for row in corpus
+            (line, self.embed_text(line))
+            for row in corpus
+            for line in row["contents"].split("\n")
         ]
+
         with open(self.db_path, "w") as f:
             json.dump(self.vector_db, f)
         logger.log(f"Vector database built with {len(self.vector_db)} entries")
