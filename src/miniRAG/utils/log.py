@@ -92,7 +92,7 @@ class Logger:
             level=LogLevel.INFO,
         )
 
-    def log_task(
+    def log_chat(
         self,
         content: str,
         title: Optional[str] = None,

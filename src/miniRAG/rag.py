@@ -23,7 +23,7 @@ class RAG:
             """You are a helpful chatbot.\nUse only the following context:\n"""
             + "\n".join([f" - {chunk}" for chunk, _ in retrieved_knowledge])
         )
-        logger.log_task(
+        logger.log_chat(
             instruction_prompt, "Instruction Prompt", subtitle=self.model.model_id
         )
         messages = [
@@ -31,6 +31,6 @@ class RAG:
             {"role": "user", "content": query},
         ]
         response = self.model(messages)
-        logger.log_rule("Chatbot response:")
+        logger.log_chat(response.content, "Chat response")
 
         return response.content  # type ignore

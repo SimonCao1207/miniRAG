@@ -1,4 +1,5 @@
 import json
+import time
 from pathlib import Path
 from typing import List
 
@@ -74,16 +75,26 @@ class VectorDB:
         Currently, each element in the VECTOR_DB will be a tuple (chunk, embedding)
         TODO: Use a more efficient vector database, with better indexing approach.
         """
+        start_time = time.perf_counter()
         split_docs: List[Document] = corpus
         if self.is_split:
-            splitter = TextSplitter(chunk_size=512, chunk_overlap=50)
+            splitter = TextSplitter(chunk_size=200, chunk_overlap=50)
             split_docs = splitter.split_documents(corpus)
 
         # This might be to slow for 15000 split_docs
-        self.vector_db = [
-            (doc.page_content, self.embed_text(doc.page_content)) for doc in split_docs
-        ]
+        for doc_id, doc in enumerate(split_docs):
+            self.vector_db.append(
+                {
+                    "id": doc_id,
+                    "text": doc.page_content,
+                    "embedding": self.embed_text(doc.page_content),
+                }
+            )
+
         self.save_index()
+        end_time = time.perf_counter()
+        exec_time = end_time - start_time
+        logger.log(f"Buiding index for retrieval took {exec_time:.2f} seconds")
 
     def save_index(self):
         with open(self.db_path, "w") as f:
@@ -122,10 +133,10 @@ class Retriever:
             return dot_product / (norm_a * norm_b)
 
         similarities = []
-        for chunk, embedding in self.vector_db:
+        for item in self.vector_db:
             similarity = cosine_similarity(
-                self.vector_db.embed_text(user_query), embedding
+                self.vector_db.embed_text(user_query), item["embedding"]
             )
-            similarities.append((chunk, similarity))
+            similarities.append((item["text"], similarity))
         similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities[: self.top_n]

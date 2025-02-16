@@ -162,7 +162,7 @@ class ChatModel:
 
 
 class OllamaModel(ChatModel):
-    """This model connects to an OpenAI-compatible API server.
+    """This is Ollama's local model.
 
     Parameters:
         model_id (`str`):
