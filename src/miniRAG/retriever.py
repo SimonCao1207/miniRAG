@@ -1,59 +1,87 @@
 import json
 from pathlib import Path
+from typing import List
 
 import ollama
 
+import datasets
 from datasets import Dataset
+from miniRAG.documents import Document
 from miniRAG.utils.log import Logger
 
 logger = Logger()
 
 
-def load_corpus(corpus_path: Path) -> Dataset:
-    """
-    Return Dataset object with features "id" and "contents"
-    Each id is like a Document object in langchain
-    """
+def load_corpus(corpus_path: Path) -> List[Document]:
     logger.log("Loading the corpus...")
-    if corpus_path.suffix == ".jsonl":
+    documents = []
+    if corpus_path.suffix == ".jsonl":  # FlashRAG corpus
         corpus: Dataset = datasets.load_dataset(  # type: ignore
             "json", data_files=str(corpus_path), split="train"
         )
-        return corpus
+        for row in corpus:
+            documents.append(
+                Document(
+                    page_content=row["contents"],
+                    metadata={"id": str(row["id"]), "title": row["title"]},
+                )
+            )
     else:
         with open(corpus_path, "r") as file:
             data = file.read()
-        dataset = Dataset.from_dict(
-            {
-                "id": [0],
-                "contents": [data],
-            }
-        )
-        return dataset
+        documents.append(Document(page_content=data))
+    return documents
+
+
+class TextSplitter:
+    """
+    This Splitter will split our documents into chunks of chunk_size characters
+    with chunk_overlap characters of overlap between chunks. The overlap
+    helps mitigate the possibility of separating a statement from important
+    context related to it.
+    """
+
+    def __init__(self, chunk_size, chunk_overlap):
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+
+    def split_documents(self, docs: List[Document]) -> List[Document]:
+        split_docs = []
+        for doc in docs:
+            text = doc.page_content
+            start = 0
+            while start < len(text):
+                end = start + self.chunk_size
+                chunk = text[start:end]
+                split_docs.append(Document(page_content=chunk, metadata=doc.metadata))
+                start += self.chunk_size - self.chunk_overlap
+        return split_docs
 
 
 class VectorDB:
-    def __init__(self, db_path, embedding):
+    def __init__(self, db_path, embedding, is_split=False):
         self.db_path = Path(db_path)
         self.vector_db = []
         self.embedding = embedding
+        self.is_split = is_split
 
     def embed_text(self, text):
         return ollama.embed(model=self.embedding, input=text)["embeddings"][0]
 
-    def initialize(self, corpus: Dataset):
+    def initialize(self, corpus: List[Document]):
         """
         This is where the indexing(splitting) happens.
         Currently, each element in the VECTOR_DB will be a tuple (chunk, embedding)
         TODO: Use a more efficient vector database, with better indexing approach.
         """
+        split_docs: List[Document] = corpus
+        if self.is_split:
+            splitter = TextSplitter(chunk_size=512, chunk_overlap=50)
+            split_docs = splitter.split_documents(corpus)
 
-        # Here we will use a simple text splitter that partitions based on sentences
-        # seperated by new line.
+        # This might be to slow for 15000 split_docs
         self.vector_db = [
-            (line, self.embed_text(line))
-            for row in corpus
-            for line in row["contents"].split("\n")
+            (doc.page_content, self.embed_text(doc.page_content)) for doc in split_docs
         ]
 
         with open(self.db_path, "w") as f:

@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
 
-import pytest
-
 from miniRAG.config import Config
 from miniRAG.models import OllamaModel, OpenAIServerModel
 from miniRAG.rag import RAG
@@ -18,7 +16,6 @@ config_dict = {
 }
 
 
-@pytest.fixture
 def setup_rag():
     config = Config(config_dict)
     corpus = load_corpus(config.corpus_path)
@@ -41,7 +38,11 @@ def setup_rag():
 
 
 def test_flashRAG(setup_rag):
-    rag = setup_rag
+    rag = setup_rag()
     input_query = "What is the capital of France? Answer short without explanation."
     response = rag.generate(input_query)
     assert "Paris" in response
+
+
+if __name__ == "__main__":
+    test_flashRAG(setup_rag)
