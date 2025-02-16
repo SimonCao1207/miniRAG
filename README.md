@@ -18,6 +18,10 @@ ollama pull hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF
 uv pip install -e .
 ```
 
+## Run Test
+```
+pytest
+```
 ## Plan
 
 Here're the plan for now: 
