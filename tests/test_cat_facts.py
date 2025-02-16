@@ -22,9 +22,9 @@ config_dict = {
 def setup_rag():
     config = Config(config_dict)
     corpus = load_corpus(config.corpus_path)
-    vector_db = VectorDB(config.index_path, config.embedding_model)
+    vector_db = VectorDB(config.index_path, config.embedding_model, is_split=True)
     if not config.index_path.exists():
-        vector_db.initialize(corpus)
+        vector_db.build_index(corpus)
     vector_db.load()
     retriever = Retriever(vector_db=vector_db)
     model_id = config.model_id
@@ -40,7 +40,7 @@ def setup_rag():
     return rag
 
 
-def test_cat_facts(setup_rag):
+def test_cat_facts_split(setup_rag):
     rag = setup_rag
     input_query = "What is the cat top speed? Answer short without explanation."
     response = rag.generate(input_query)

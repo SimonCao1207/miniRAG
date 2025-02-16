@@ -21,7 +21,7 @@ def setup_rag():
     corpus = load_corpus(config.corpus_path)
     vector_db = VectorDB(config.index_path, config.embedding_model)
     if not config.index_path.exists():
-        vector_db.initialize(corpus)
+        vector_db.build_index(corpus)
     vector_db.load()
     retriever = Retriever(vector_db=vector_db)
     model_id = config.model_id

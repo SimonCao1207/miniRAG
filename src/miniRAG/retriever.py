@@ -68,7 +68,7 @@ class VectorDB:
     def embed_text(self, text):
         return ollama.embed(model=self.embedding, input=text)["embeddings"][0]
 
-    def initialize(self, corpus: List[Document]):
+    def build_index(self, corpus: List[Document]):
         """
         This is where the indexing(splitting) happens.
         Currently, each element in the VECTOR_DB will be a tuple (chunk, embedding)
@@ -83,7 +83,9 @@ class VectorDB:
         self.vector_db = [
             (doc.page_content, self.embed_text(doc.page_content)) for doc in split_docs
         ]
+        self.save_index()
 
+    def save_index(self):
         with open(self.db_path, "w") as f:
             json.dump(self.vector_db, f)
         logger.log(f"Vector database built with {len(self.vector_db)} entries")
