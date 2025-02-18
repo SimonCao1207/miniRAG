@@ -10,11 +10,14 @@ from miniRAG.retriever import Retriever, VectorDB, load_corpus
 
 workspace = Path(__file__).resolve().parent.parent
 
+if not os.path.exists(workspace / "tmp"):
+    os.mkdir(workspace / "tmp")
+
 config_dict = {
     "model": "llama",
     "embedding_model": "hf.co/CompendiumLabs/bge-base-en-v1.5-gguf",
     "corpus_path": workspace / "datasets/cat-facts.txt",
-    "index_path": workspace / "tests/vector_db.json",
+    "index_path": workspace / "tmp/vector_db.json",
 }
 
 

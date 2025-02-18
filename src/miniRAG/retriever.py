@@ -35,6 +35,44 @@ def load_corpus(corpus_path: Path) -> List[Document]:
 
 
 class TextSplitter:
+    def __init__(self):
+        pass
+
+    def split_documents(self, docs: List[Document]) -> List[Document]:
+        raise NotImplementedError
+
+
+class SentenceTextSplitter(TextSplitter):
+    def __init__(self, chunk_size):
+        super().__init__()
+        self.chunk_size = chunk_size
+
+    """
+    This Splitter will split our documents into sentences.
+    """
+
+    def split_documents(self, docs: List[Document]) -> List[Document]:
+        split_docs = []
+        for doc in docs:
+            chunks = []
+            total_chunk_len = 0
+            sentences = doc.page_content.split(".")
+            # not very effective split since it might mistake with "." in "Mr. Smith" or "Dr. Brown"
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if (sentence != "") and (len(sentence) > 10):
+                    chunks.append(sentence)
+                    total_chunk_len += len(sentence)
+                if total_chunk_len > self.chunk_size:
+                    split_docs.append(
+                        Document(page_content=". ".join(chunks), metadata=doc.metadata)
+                    )
+                    total_chunk_len = 0
+                    chunks = []
+        return split_docs
+
+
+class CharacterTextSplitter(TextSplitter):
     """
     This Splitter will split our documents into chunks of chunk_size characters
     with chunk_overlap characters of overlap between chunks. The overlap
@@ -78,7 +116,8 @@ class VectorDB:
         start_time = time.perf_counter()
         split_docs: List[Document] = corpus
         if self.is_split:
-            splitter = TextSplitter(chunk_size=200, chunk_overlap=50)
+            # splitter = CharacterTextSplitter(chunk_size=200, chunk_overlap=50)
+            splitter = SentenceTextSplitter(chunk_size=200)
             split_docs = splitter.split_documents(corpus)
 
         # This might be to slow for 15000 split_docs

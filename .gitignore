@@ -172,3 +172,6 @@ cython_debug/
 
 # vscode
 .vscode
+
+# tmp files
+tmp

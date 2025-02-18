@@ -7,12 +7,14 @@ from miniRAG.rag import RAG
 from miniRAG.retriever import Retriever, VectorDB, load_corpus
 
 workspace = Path(__file__).resolve().parent.parent
+if not os.path.exists("tmp"):
+    os.mkdir("tmp")
 
 config_dict = {
     "model": "llama",
     "embedding_model": "hf.co/CompendiumLabs/bge-base-en-v1.5-gguf",
     "corpus_path": workspace / "datasets/flashRAG/general_knowledge.jsonl",
-    "index_path": workspace / "tests/vector_db_flashRAG.json",
+    "index_path": workspace / "tmp/vector_db_flashRAG.json",
 }
 
 
