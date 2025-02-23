@@ -172,10 +172,9 @@ class Retriever:
             return dot_product / (norm_a * norm_b)
 
         similarities = []
+        query_embedding = self.vector_db.embed_text(user_query)
         for item in self.vector_db:
-            similarity = cosine_similarity(
-                self.vector_db.embed_text(user_query), item["embedding"]
-            )
+            similarity = cosine_similarity(query_embedding, item["embedding"])
             similarities.append((item["text"], similarity))
         similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities[: self.top_n]
