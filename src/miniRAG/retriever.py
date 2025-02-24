@@ -120,6 +120,8 @@ class VectorDB:
             splitter = SentenceTextSplitter(chunk_size=200)
             split_docs = splitter.split_documents(corpus)
 
+        logger.log(f"Number of docs: {len(split_docs)}")
+
         # This might be to slow for 15000 split_docs
         for doc_id, doc in enumerate(split_docs):
             self.vector_db.append(
@@ -129,11 +131,11 @@ class VectorDB:
                     "embedding": self.embed_text(doc.page_content),
                 }
             )
-
+            end_time = time.perf_counter()
+            exec_time = end_time - start_time
+            start_time = end_time
+            logger.log(f"Buiding index for doc {doc_id} took {exec_time:.2f} seconds")
         self.save_index()
-        end_time = time.perf_counter()
-        exec_time = end_time - start_time
-        logger.log(f"Buiding index for retrieval took {exec_time:.2f} seconds")
 
     def save_index(self):
         with open(self.db_path, "w") as f:
