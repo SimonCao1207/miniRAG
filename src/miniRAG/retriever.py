@@ -1,8 +1,11 @@
 import json
+import os
 import time
 from pathlib import Path
 from typing import List
 
+import faiss
+import numpy as np
 import ollama
 
 import datasets
@@ -98,11 +101,13 @@ class CharacterTextSplitter(TextSplitter):
 
 
 class VectorDB:
-    def __init__(self, db_path, embedding, is_split=False):
-        self.db_path = Path(db_path)
-        self.vector_db = []
+    def __init__(self, index_path, embedding, is_split=False):
+        self.index_path = Path(index_path)
+        self.doc_path = Path(os.path.splitext(index_path)[0] + ".json")
+        self.doc_map = []
         self.embedding = embedding
         self.is_split = is_split
+        self.index = None
 
     def embed_text(self, text):
         return ollama.embed(model=self.embedding, input=text)["embeddings"][0]
@@ -116,45 +121,53 @@ class VectorDB:
         start_time = time.perf_counter()
         split_docs: List[Document] = corpus
         if self.is_split:
-            # splitter = CharacterTextSplitter(chunk_size=200, chunk_overlap=50)
             splitter = SentenceTextSplitter(chunk_size=200)
             split_docs = splitter.split_documents(corpus)
 
         logger.log(f"Number of docs: {len(split_docs)}")
 
+        embeddings = []
+
         # This might be to slow for 15000 split_docs
         for doc_id, doc in enumerate(split_docs):
-            self.vector_db.append(
+            embeddings.append(self.embed_text(doc.page_content))
+            self.doc_map.append(
                 {
-                    "id": doc_id,
                     "text": doc.page_content,
-                    "embedding": self.embed_text(doc.page_content),
+                    "metadata": doc.metadata,
                 }
             )
             end_time = time.perf_counter()
             exec_time = end_time - start_time
             start_time = end_time
-            logger.log(f"Buiding index for doc {doc_id} took {exec_time:.2f} seconds")
+            logger.log(f"Embedding doc {doc_id} took {exec_time:.2f} seconds")
+
+        embeddings = np.array(embeddings).astype("float32")
+        self.index = faiss.IndexFlatL2(embeddings.shape[1])
+        self.index.add(embeddings)  # type: ignore
+
         self.save_index()
+        end_time = time.perf_counter()
+        exec_time = end_time - start_time
+        logger.log(f"Buiding index for retrieval took {exec_time:.2f} seconds")
 
     def save_index(self):
-        with open(self.db_path, "w") as f:
-            json.dump(self.vector_db, f)
-        logger.log(f"Vector database built with {len(self.vector_db)} entries")
+        faiss.write_index(self.index, str(self.index_path))
+        with open(self.doc_path.with_suffix(".json"), "w") as f:
+            json.dump(self.doc_map, f)
+            logger.log(f"Vector database built with {len(self.doc_map)} entries")
 
     def load(self):
-        if self.db_path.exists():
-            with open(self.db_path, "r") as f:
-                self.vector_db = json.load(f)
-                logger.log(f"Vector database loaded with {len(self.vector_db)} entries")
-        else:
-            self.vector_db = []
+        self.index = faiss.read_index(str(self.index_path))
+        with open(self.doc_path.with_suffix(".json"), "r") as f:
+            self.doc_map = json.load(f)
+            logger.log(f"Vector database loaded with {len(self.doc_map)} entries")
 
     def __iter__(self):
-        return iter(self.vector_db)
+        return iter(self.doc_map)
 
     def __len__(self):
-        return len(self.vector_db)
+        return len(self.doc_map)
 
 
 class Retriever:
@@ -167,16 +180,15 @@ class Retriever:
         Given a user input, relevant splits are retrieved from storage using a Retriever.
         """
 
-        def cosine_similarity(a, b):
-            dot_product = sum([x * y for x, y in zip(a, b)])
-            norm_a = sum([x**2 for x in a]) ** 0.5
-            norm_b = sum([x**2 for x in b]) ** 0.5
-            return dot_product / (norm_a * norm_b)
-
-        similarities = []
-        query_embedding = self.vector_db.embed_text(user_query)
-        for item in self.vector_db:
-            similarity = cosine_similarity(query_embedding, item["embedding"])
-            similarities.append((item["text"], similarity))
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        return similarities[: self.top_n]
+        query_embedding = np.array([self.vector_db.embed_text(user_query)]).astype(
+            "float32"
+        )
+        if self.vector_db.index:
+            distances, indices = self.vector_db.index.search(
+                query_embedding, k=self.top_n
+            )  # type: ignore
+            results = [
+                (self.vector_db.doc_map[idx]["text"], distances[0][i])
+                for i, idx in enumerate(indices[0])
+            ]
+            return results
