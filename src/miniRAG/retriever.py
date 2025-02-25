@@ -130,17 +130,44 @@ class VectorDB:
 
         # This might be to slow for 15000 split_docs
         for doc_id, doc in enumerate(split_docs):
-            embeddings.append(self.embed_text(doc.page_content))
-            self.doc_map.append(
-                {
-                    "text": doc.page_content,
-                    "metadata": doc.metadata,
-                }
-            )
-            end_time = time.perf_counter()
-            exec_time = end_time - start_time
-            start_time = end_time
-            logger.log(f"Embedding doc {doc_id} took {exec_time:.2f} seconds")
+            try:
+                embeddings.append(self.embed_text(doc.page_content))
+                self.doc_map.append(
+                    {
+                        "text": doc.page_content,
+                        "metadata": doc.metadata,
+                    }
+                )
+                end_time = time.perf_counter()
+                exec_time = end_time - start_time
+                start_time = end_time
+                logger.log(
+                    f"Embedding doc {doc_id}/{len(split_docs)} took {exec_time:.2f} seconds"
+                )
+            except Exception as e:
+                logger.log(f"Error embedding doc {doc_id}: {e}", style="bold red")
+
+                smaller_chunks = CharacterTextSplitter(
+                    chunk_size=500, chunk_overlap=50
+                ).split_documents([doc])
+
+                logger.log(
+                    f"Split the doc into {len(smaller_chunks)} smaller chunks and embed them"
+                )
+                for chunk in smaller_chunks:
+                    try:
+                        embeddings.append(self.embed_text(chunk.page_content))
+                        self.doc_map.append(
+                            {
+                                "text": chunk.page_content,
+                                "metadata": chunk.metadata,
+                            }
+                        )
+                        end_time = time.perf_counter()
+                        exec_time = end_time - start_time
+                        start_time = end_time
+                    except Exception as e:
+                        logger.log(f"Error embedding chunk: {e}")
 
         embeddings = np.array(embeddings).astype("float32")
         self.index = faiss.IndexFlatL2(embeddings.shape[1])

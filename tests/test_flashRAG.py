@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+import pytest
+
 from miniRAG.config import Config
 from miniRAG.models import OllamaModel, OpenAIServerModel
 from miniRAG.rag import RAG
@@ -14,14 +16,15 @@ config_dict = {
     "model": "llama",
     "embedding_model": "hf.co/CompendiumLabs/bge-base-en-v1.5-gguf",
     "corpus_path": workspace / "datasets/flashRAG/general_knowledge.jsonl",
-    "index_path": workspace / "tmp/vector_db_flashRAG.index",
+    "index_path": workspace / "datasets/flashRAG/index/general_knowledge_v1.index",
 }
 
 
+@pytest.fixture
 def setup_rag():
     config = Config(config_dict)
     corpus = load_corpus(config.corpus_path)
-    vector_db = VectorDB(config.index_path, config.embedding_model)
+    vector_db = VectorDB(config.index_path, config.embedding_model, is_split=False)
     if not config.index_path.exists():
         vector_db.build_index(corpus)
     vector_db.load()
@@ -40,7 +43,7 @@ def setup_rag():
 
 
 def test_flashRAG(setup_rag):
-    rag = setup_rag()
+    rag = setup_rag
     input_query = "What is the capital of France? Answer short without explanation."
     response = rag.generate(input_query)
     assert "Paris" in response
