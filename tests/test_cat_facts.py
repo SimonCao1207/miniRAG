@@ -17,7 +17,7 @@ config_dict = {
     "model": "llama",
     "embedding_model": "hf.co/CompendiumLabs/bge-base-en-v1.5-gguf",
     "corpus_path": workspace / "datasets/cat-facts.txt",
-    "index_path": workspace / "tmp/vector_db.json",
+    "index_path": workspace / "tmp/vector_db.index",
 }
 
 
