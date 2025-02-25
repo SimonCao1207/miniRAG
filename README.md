@@ -22,16 +22,7 @@ uv pip install -e .
 ```
 pytest
 ```
-## Plan
+## Feature
 
-Here're the plan for now: 
-
-- Run our rag system on some benchmarks : 
-    + [rgb](https://github.com/chen700564/RGB)
-    + [flash rag](https://huggingface.co/datasets/RUC-NLPIR/FlashRAG_datasets)
-    + [crag](https://github.com/facebookresearch/CRAG)
-
-- Optimize the rag system with different methods : [contextual retrieval](https://www.anthropic.com/news/contextual-retrieval), ...
-- Make a web-ui for demo 
-
+- Run our rag system  [flash rag](https://huggingface.co/datasets/RUC-NLPIR/FlashRAG_datasets) toy dataset
 
