@@ -2,7 +2,7 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import faiss
 import numpy as np
@@ -202,7 +202,7 @@ class Retriever:
         self.vector_db = vector_db
         self.top_n = top_n
 
-    def retrieve(self, user_query):
+    def retrieve(self, user_query) -> List[Tuple[str, float]] | None:
         """
         Given a user input, relevant splits are retrieved from storage using a Retriever.
         """
@@ -219,3 +219,4 @@ class Retriever:
                 for i, idx in enumerate(indices[0])
             ]
             return results
+        return None

@@ -13,7 +13,10 @@ class RAG:
         self.retriever = retriever
 
     def generate(self, query: str) -> str:
+        logger.log_chat(query, "Query")
         retrieved_knowledge = self.retriever.retrieve(query)
+        if retrieved_knowledge is None:
+            return "No knowledge retrieved."
         logger.log_rule("Retrieved knowledge:")
         for chunk, similarity in retrieved_knowledge:
             print(f" - (similarity: {similarity:.2f}) {chunk}")
