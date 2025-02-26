@@ -34,6 +34,8 @@ class RAG:
         module = dspy.ChainOfThought(QASignature)
         response = module(query=query, context=retrieved_knowledge)
 
+        dspy.inspect_history(n=1)
+
         logger.log_chat(response.answer, "Chat response")
 
         return response.answer  # type ignore
