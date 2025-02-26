@@ -24,5 +24,10 @@ pytest
 ```
 ## Feature
 
-- Run our rag system  [flash rag](https://huggingface.co/datasets/RUC-NLPIR/FlashRAG_datasets) toy dataset
+### FlashRAG
+- Provide a toy index (`/datasets/flashRAG/index/general_knowledge_v1.index`), built using E5-base-v2 and the toy corpus from [flashRAG](https://huggingface.co/datasets/RUC-NLPIR/FlashRAG_datasets) 
+- To evaluate the method, run the toy benchmark with: 
+```
+pytest -s tests/test_flashRAG.py
+```
 
