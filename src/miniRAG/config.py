@@ -13,6 +13,6 @@ class Config:
 
 
 _shortcut = {
-    "gpt": "gpt-4o-mini",
-    "llama": "hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF",
+    "gpt": "openai/gpt-4o-mini",
+    "llama": "ollama_chat/hf.co/bartowski/Llama-3.2-1B-Instruct-GGUF",
 }
