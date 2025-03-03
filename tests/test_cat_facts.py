@@ -1,10 +1,10 @@
 import os
 from pathlib import Path
 
+import dspy
 import pytest
 
 from miniRAG.config import Config
-from miniRAG.models import OllamaModel, OpenAIServerModel
 from miniRAG.rag import RAG
 from miniRAG.retriever import Retriever, VectorDB, load_corpus
 
@@ -32,13 +32,9 @@ def setup_rag():
     retriever = Retriever(vector_db=vector_db)
     model_id = config.model_id
     if config.model == "gpt":
-        model = OpenAIServerModel(
-            model_id=model_id,
-            api_key=os.getenv("OPENAI_API_KEY"),
-            api_base="https://api.openai.com/v1",
-        )
+        model = dspy.LM(model_id, api_key=os.getenv("OPENAI_API_KEY"))
     elif config.model == "llama":
-        model = OllamaModel(model_id)
+        model = dspy.LM(model_id, api_base="http://localhost:11434", api_key="")
     rag = RAG(model, retriever)
     return rag
 

@@ -1,14 +1,21 @@
 # https://huggingface.co/blog/ngxson/make-your-own-rag
 
-from miniRAG.models import ChatModel
+import dspy
+
 from miniRAG.retriever import Retriever
 from miniRAG.utils.log import Logger
 
 logger = Logger()
 
 
+class QASignature(dspy.Signature):
+    query = dspy.InputField(desc="A natural language question.")
+    context = dspy.InputField(desc="A relevant context for answer the question.")
+    answer = dspy.OutputField(desc="A concise factual answer.")
+
+
 class RAG:
-    def __init__(self, model: ChatModel, retriever: Retriever):
+    def __init__(self, model, retriever: Retriever):
         self.model = model
         self.retriever = retriever
 
@@ -17,23 +24,18 @@ class RAG:
         retrieved_knowledge = self.retriever.retrieve(query)
         if retrieved_knowledge is None:
             return "No knowledge retrieved."
+
+        dspy.configure(lm=self.model)
+
         logger.log_rule("Retrieved knowledge:")
         for chunk, similarity in retrieved_knowledge:
             print(f" - (similarity: {similarity:.2f}) {chunk}")
 
-        # TODO: make a better instruction prompt
-        instruction_prompt = (
-            """You are a helpful chatbot.\nUse only the following context:\n"""
-            + "\n".join([f" - {chunk}" for chunk, _ in retrieved_knowledge])
-        )
-        logger.log_chat(
-            instruction_prompt, "Instruction Prompt", subtitle=self.model.model_id
-        )
-        messages = [
-            {"role": "system", "content": instruction_prompt},
-            {"role": "user", "content": query},
-        ]
-        response = self.model(messages)
-        logger.log_chat(response.content, "Chat response")
+        module = dspy.ChainOfThought(QASignature)
+        response = module(query=query, context=retrieved_knowledge)
 
-        return response.content  # type ignore
+        dspy.inspect_history(n=1)
+
+        logger.log_chat(response.answer, "Chat response")
+
+        return response.answer  # type ignore
